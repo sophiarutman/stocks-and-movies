@@ -1,0 +1,311 @@
+---
+title: "Stock & Movie Analysis Regression Modeling"
+author: Amina, Lizzie, Rachna, Sophia
+format: html
+
+---
+
+
+1. Further Cleaning and Filtering of Stocks & Movies: The datasets from this process will only contain stocks and movies between the years of 1999 - 2019. 
+
+
+```{python}
+
+import pandas as pd 
+import polars as pl 
+import numpy as np 
+import matplotlib.pyplot as plt
+```
+
+```{python}
+#Selecting the timeframe 1999 - 2019 
+
+merged_df = pd.read_csv('merged_data/merged.csv')
+
+
+merged_df['Date'] = pd.to_datetime(merged_df['Date'], errors='coerce')
+
+merged_filtered = merged_df[(merged_df['Date'].dt.year >= 1999) & (merged_df['Date'].dt.year <= 2019)]
+
+merged_filtered.head()
+merged_filtered.tail() 
+
+```
+
+
+```{python}
+
+merged_filtered.shape
+merged_filtered.isnull().any(axis=1).sum()
+
+#Checking na per year for box office  
+
+merged_filtered['Year'] = merged_filtered['Date'].dt.year
+
+missing_box_office_per_year = merged_filtered[merged_filtered['Box Office'].isnull()].groupby('Year').size()
+
+# Display result
+print(missing_box_office_per_year)
+
+#Dropping drops atleast half the dataset so instead  moving forward with this but we could just duplicate the movies box office $ in that year to a movie. 
+
+# Treating them as seperate dfs removing the movies from the merged df 
+
+
+merged_filtered.columns
+merged_stock = merged_filtered.iloc[:, 1:-17]
+
+merged_stock.tail()
+
+
+
+```
+
+```{python}
+merged_stock.head()
+merged_stock.isnull().any(axis=1).sum()
+merged_stock['Year'] = merged_stock['Date'].dt.year
+
+missing_stock = merged_stock[merged_stock['Adj Close'].isnull()].groupby('Year').size()
+
+print(missing_stock)
+
+#Dropping where adj close is empty & saving it 
+
+#Dropping the year col that was added. 
+merged_stock = merged_stock.dropna(subset=['Adj Close'])
+
+merged_stock.to_csv('merged_data/merged_stock_99_2019.csv', index=False)
+
+
+```
+
+
+```{python}
+#Cleaning the movie dataset for 1999 -2019 alone. 
+
+movie_df = pd.read_csv('movie_data/movies_with_details.csv')
+
+movie_df.head() 
+
+
+movie_df['Year'] = pd.to_numeric(movie_df['Year'], errors='coerce')
+movie_df = movie_df[(movie_df['Year'] >= 1999) & (movie_df['Year'] <= 2019)]
+
+movie_df = movie_df.sort_values(by='Year')
+movie_df.head()
+movie_df.tail()
+```
+
+```{python}
+
+#Dropping Nas in boc office and then saving it 
+
+missing_movies= movie_df[movie_df['Box Office'].isnull()].groupby('Year').size()
+
+movie_df.isnull().any(axis=1).sum()
+
+print(missing_movies)
+
+movie_df = movie_df.dropna(subset=['Box Office'])
+
+
+movie_df.to_csv('merged_data/movies_99_2019.csv', index=False)
+
+
+```
+
+2. Exploring the Correlation Between Stocks and Movie's Box Office: We will be exploring the stock markets affect to the box office. 
+
+```{python}
+
+stock_df = pd.read_csv('merged_data/merged_stock_99_2019.csv')
+
+movies_df = pd.read_csv('merged_data/movies_99_2019.csv')
+
+#Aggregating by year. 
+
+stock_yearly = stock_df.groupby("Year")["Adj Close"].mean().reset_index()
+movies_df["Box Office"] = movies_df["Box Office"].replace('[\$,]', '', regex=True).astype(float)
+movies_yearly = movies_df.groupby("Year")["Box Office"].sum().reset_index()
+
+#Raw Trend Comparison of Avg Stock & Avg Box Office
+#Converting so there no floats in yrs  
+stock_yearly["Year"] = stock_yearly["Year"].astype(int)
+movies_yearly["Year"] = movies_yearly["Year"].astype(int)
+
+# Making sure the years are the same
+years = sorted(set(stock_yearly["Year"]).intersection(movies_yearly["Year"]))
+
+stock_yearly = stock_yearly[stock_yearly["Year"].isin(years)]
+movies_yearly = movies_yearly[movies_yearly["Year"].isin(years)]
+
+```
+
+```{python}
+#Making the movies in billions 
+movies_yearly["Box Office (Billion $)"] = movies_yearly["Box Office"] / 1e9
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+#Plotting the stock data and movie
+
+#stock
+ax1.plot(stock_yearly["Year"], stock_yearly["Adj Close"], color="blue", label="Avg Stock Adj Close")
+ax1.set_ylabel("Avg Adj Close ($)", color="blue")
+ax1.tick_params(axis="y", labelcolor="blue")
+
+#movie
+ax2 = ax1.twinx()
+ax2.plot(movies_yearly["Year"], movies_yearly["Box Office (Billion $)"], color="green", label="Total Box Office")
+ax2.set_ylabel("Total Box Office ($ Billion)", color="green")
+ax2.tick_params(axis="y", labelcolor="green")
+
+# Setting interger and titles. 
+ax1.set_xticks(years)
+ax1.set_xticklabels([str(year) for year in years], rotation=45)
+
+plt.title("Yearly Avg Stock Adj Close vs. Total Box Office (1999–2019)")
+ax1.set_xlabel("Year")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+```
+
+
+```{python}
+
+#Exploring linear correlation among stock and movies with avgs and linear regression 
+
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+
+# Preparing X & y to fit the linear regression 
+X = stock_yearly["Adj Close"].values.reshape(-1, 1)
+y = movies_yearly["Box Office"].values
+
+#Fitting the linear regression
+model = LinearRegression()
+model.fit(X, y)
+y_pred = model.predict(X)
+
+# Calculating r2 to see if there is a linear correlation 
+r2 = r2_score(y, y_pred)
+
+#Plotting them both with linear fit 
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=stock_yearly["Adj Close"], y=movies_yearly["Box Office"], color="purple", s=100)
+plt.plot(stock_yearly["Adj Close"], y_pred, color="black", linestyle="--", label=f"Linear Fit (R² = {r2:.2f})")
+
+plt.xlabel("Avg Stock Adj Close ($)")
+plt.ylabel("Total Box Office  Billions (Yearly) ($)")
+plt.title("Relationship Between Stock Market and Box Office Revenue (1999–2019)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+
+```
+
+
+From the R^2 = 0.29 We can see that there is a very weak linear correlation among the box office and the stock market. The Box office has a volatility that the stock market doesn't experience. 
+
+
+```{python}
+
+#Exploring the relationship through indv movies and adj close on release date. 
+
+#Converting the date columns again 
+movies_df["Released"] = pd.to_datetime(movies_df["Released"], errors="coerce")
+stock_df["Date"] = pd.to_datetime(stock_df["Date"], errors="coerce") 
+
+
+#Converting release date to datetime
+movies_df["Released"] = pd.to_datetime(movies_df["Released"], errors="coerce")
+
+
+#Matching each movie with the adj stock price on its release date and dropping those with no data
+matched_df = pd.merge(
+    movies_df[["Released", "Box Office"]],
+    stock_df[["Date", "Adj Close"]],
+    left_on="Released",
+    right_on="Date",
+    how="inner"
+).dropna()
+
+#Plotting indv  movies with price of that day 
+plt.figure(figsize=(10, 6))
+sns.scatterplot(
+    x=matched_df["Adj Close"],
+    y=matched_df["Box Office"],
+    marker='x',
+    color="darkred",
+    s=80
+)
+
+plt.xlabel("Stock Adj Close on Movie Release Day ($)")
+plt.ylabel("Individual Movie Box Office ($)")
+plt.title("Individual Movie Box Office vs. Stock Market (1999–2019)")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+
+
+
+```
+
+
+
+Even though there is no clear linear relationship between the stock market  and box office revenue, we will explore whether box office earnings can be predicted using stock market data through polynomial regression of different degrees
+
+
+
+3.  Fitting mutiple degree polynomials to predict movies box office revenue. 
+
+
+```{python}
+from sklearn.preprocessing import PolynomialFeatures
+
+#Fitting them on yearly avg box office plotted against yearly adj stock close
+X = stock_yearly["Adj Close"].values.reshape(-1, 1)
+y = movies_yearly["Box Office"].values
+
+#Plotting polynomial fits for different degrees
+degrees = [2, 3, 13]
+colors = ['blue', 'red', 'green']
+
+plt.figure(figsize=(10, 6))
+plt.scatter(X, y, color="gray", label="Avg Box Office Data", s=60)
+
+for deg, color in zip(degrees, colors):
+    poly = PolynomialFeatures(degree=deg)
+    X_poly = poly.fit_transform(X)
+    model = LinearRegression().fit(X_poly, y)
+    y_pred = model.predict(X_poly)
+    plt.plot(X.flatten(), y_pred, color=color, linewidth=2, label=f"Degree {deg}")
+
+# Models' performance 
+
+    r2 = r2_score(y, y_pred)
+    
+    # Plotting R 
+    plt.plot(X.flatten(), y_pred, color=color, linewidth=2, 
+             label=f"Degree {deg} (R² = {r2:.3f})")
+
+plt.xlabel("Average Stock Adj Close ($)")
+plt.ylabel("Average Box Office Revenue ($)")
+plt.title("Polynomial Regression of Box Office Revenue vs. Stock Market (1999–2019)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+```
+
+
+
+From the polynomial fits, we can see that they don’t perform perfectly overall, but the 13th-degree polynomial gave the best result. This shows that higher-degree models can  capture more of the patterns in the data. Still, it’s clear that the stock market alone isn’t enough to predict box office performance. Other factors like the movie’s genre, time of year it was released, and  the actors involved likely play a big role. --> It might be worth exploring these??
+
