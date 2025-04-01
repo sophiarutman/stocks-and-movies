@@ -109,13 +109,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ol type="1">
 <li>Further Cleaning and Filtering of Stocks &amp; Movies: The datasets from this process will only contain stocks and movies between the years of 1999 - 2019.</li>
 </ol>
-<div id="adea5845" class="cell" data-execution_count="1">
+<div id="9c73b58b" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd </span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl </span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np </span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="21798f78" class="cell" data-execution_count="2">
+<div id="90fc6a6f" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Selecting the timeframe 1999 - 2019 </span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.read_csv(<span class="st">'merged_data/merged.csv'</span>)</span>
@@ -128,12 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>merged_filtered.head()</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>merged_filtered.tail() </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/19/lj7m40r97fj5_hs7nfmzyf880000gn/T/ipykernel_15939/2521726897.py:3: DtypeWarning:
+<pre><code>/var/folders/19/lj7m40r97fj5_hs7nfmzyf880000gn/T/ipykernel_16671/2521726897.py:3: DtypeWarning:
 
 Columns (10) have mixed types. Specify dtype option on import or set low_memory=False.
 </code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="32">
+<div class="cell-output cell-output-display" data-execution_count="2">
 <div>
 
 
@@ -292,7 +292,7 @@ Columns (10) have mixed types. Specify dtype option on import or set low_memory=
 </div>
 </div>
 </div>
-<div id="51bbb16e" class="cell" data-execution_count="3">
+<div id="c616b812" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>merged_filtered.shape</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>merged_filtered.isnull().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>).<span class="bu">sum</span>()</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -314,16 +314,6 @@ Columns (10) have mixed types. Specify dtype option on import or set low_memory=
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>merged_stock <span class="op">=</span> merged_filtered.iloc[:, <span class="dv">1</span>:<span class="op">-</span><span class="dv">17</span>]</span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>merged_stock.tail()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/var/folders/19/lj7m40r97fj5_hs7nfmzyf880000gn/T/ipykernel_15939/2612656744.py:6: SettingWithCopyWarning:
-
-
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-</code></pre>
-</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Year
 1999    4351
@@ -349,7 +339,17 @@ See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stab
 2019    7120
 dtype: int64</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="33">
+<div class="cell-output cell-output-stderr">
+<pre><code>/var/folders/19/lj7m40r97fj5_hs7nfmzyf880000gn/T/ipykernel_16671/2612656744.py:6: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="3">
 <div>
 
 
@@ -429,7 +429,7 @@ dtype: int64</code></pre>
 </div>
 </div>
 </div>
-<div id="75b65b15" class="cell" data-execution_count="4">
+<div id="fdc2b0f7" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>merged_stock.head()</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>merged_stock.isnull().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>).<span class="bu">sum</span>()</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>merged_stock[<span class="st">'Year'</span>] <span class="op">=</span> merged_stock[<span class="st">'Date'</span>].dt.year</span>
@@ -468,7 +468,7 @@ dtype: int64</code></pre>
 dtype: int64</code></pre>
 </div>
 </div>
-<div id="a290a11b" class="cell" data-execution_count="5">
+<div id="9946ee6f" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Cleaning the movie dataset for 1999 -2019 alone. </span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>movie_df <span class="op">=</span> pd.read_csv(<span class="st">'movie_data/movies_with_details.csv'</span>)</span>
@@ -482,7 +482,7 @@ dtype: int64</code></pre>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>movie_df <span class="op">=</span> movie_df.sort_values(by<span class="op">=</span><span class="st">'Year'</span>)</span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>movie_df.head()</span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>movie_df.tail()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="35">
+<div class="cell-output cell-output-display" data-execution_count="5">
 <div>
 
 
@@ -622,7 +622,7 @@ dtype: int64</code></pre>
 </div>
 </div>
 </div>
-<div id="7f622289" class="cell" data-execution_count="6">
+<div id="64b95145" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Dropping Nas in boc office and then saving it </span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>missing_movies<span class="op">=</span> movie_df[movie_df[<span class="st">'Box Office'</span>].isnull()].groupby(<span class="st">'Year'</span>).size()</span>
@@ -656,7 +656,7 @@ dtype: int64</code></pre>
 <ol start="2" type="1">
 <li>Exploring the Correlation Between Stocks and Movie’s Box Office: We will be exploring the stock markets affect to the box office.</li>
 </ol>
-<div id="ba8b24aa" class="cell" data-execution_count="7">
+<div id="4482b99c" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>stock_df <span class="op">=</span> pd.read_csv(<span class="st">'merged_data/merged_stock_99_2019.csv'</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>movies_df <span class="op">=</span> pd.read_csv(<span class="st">'merged_data/movies_99_2019.csv'</span>)</span>
@@ -678,7 +678,7 @@ dtype: int64</code></pre>
 <span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>stock_yearly <span class="op">=</span> stock_yearly[stock_yearly[<span class="st">"Year"</span>].isin(years)]</span>
 <span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>movies_yearly <span class="op">=</span> movies_yearly[movies_yearly[<span class="st">"Year"</span>].isin(years)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="0743f002" class="cell" data-execution_count="8">
+<div id="cbce71f8" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Making the movies in billions </span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>movies_yearly[<span class="st">"Box Office (Billion $)"</span>] <span class="op">=</span> movies_yearly[<span class="st">"Box Office"</span>] <span class="op">/</span> <span class="fl">1e9</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -714,7 +714,7 @@ dtype: int64</code></pre>
 </div>
 </div>
 </div>
-<div id="7a9b80f1" class="cell" data-execution_count="9">
+<div id="58e67cec" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Exploring linear correlation among stock and movies with avgs and linear regression </span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
@@ -754,41 +754,43 @@ dtype: int64</code></pre>
 </div>
 </div>
 <p>From the R^2 = 0.29 We can see that there is a very weak linear correlation among the box office and the stock market. The Box office has a volatility that the stock market doesn’t experience.</p>
-<div id="36b4b090" class="cell" data-execution_count="10">
+<div id="f4bf685d" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Exploring the relationship through indv movies and adj close on release date. </span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>movies_df[<span class="st">"Released"</span>] <span class="op">=</span> pd.to_datetime(movies_df[<span class="st">"Released"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>stock_df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(stock_df[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>) </span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#Converting release date to datetime</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>movies_df[<span class="st">"Released"</span>] <span class="op">=</span> pd.to_datetime(movies_df[<span class="st">"Released"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#Matching each movie with the adj stock price on its release date and dropping those with no data</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>matched_df <span class="op">=</span> pd.merge(</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    movies_df[[<span class="st">"Released"</span>, <span class="st">"Box Office"</span>]],</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    stock_df[[<span class="st">"Date"</span>, <span class="st">"Adj Close"</span>]],</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    left_on<span class="op">=</span><span class="st">"Released"</span>,</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    right_on<span class="op">=</span><span class="st">"Date"</span>,</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    how<span class="op">=</span><span class="st">"inner"</span></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>).dropna()</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#Plotting indv  movies with price of that day </span></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>sns.scatterplot(</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span>matched_df[<span class="st">"Adj Close"</span>],</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span>matched_df[<span class="st">"Box Office"</span>],</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">'x'</span>,</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"darkred"</span>,</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">80</span></span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Stock Adj Close on Movie Release Day ($)"</span>)</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Individual Movie Box Office ($)"</span>)</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Individual Movie Box Office vs. Stock Market (1999–2019)"</span>)</span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
-<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#Converting the date columns again </span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>movies_df[<span class="st">"Released"</span>] <span class="op">=</span> pd.to_datetime(movies_df[<span class="st">"Released"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>stock_df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(stock_df[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>) </span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#Converting release date to datetime</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>movies_df[<span class="st">"Released"</span>] <span class="op">=</span> pd.to_datetime(movies_df[<span class="st">"Released"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">#Matching each movie with the adj stock price on its release date and dropping those with no data</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>matched_df <span class="op">=</span> pd.merge(</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    movies_df[[<span class="st">"Released"</span>, <span class="st">"Box Office"</span>]],</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    stock_df[[<span class="st">"Date"</span>, <span class="st">"Adj Close"</span>]],</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    left_on<span class="op">=</span><span class="st">"Released"</span>,</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    right_on<span class="op">=</span><span class="st">"Date"</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    how<span class="op">=</span><span class="st">"inner"</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>).dropna()</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#Plotting indv  movies with price of that day </span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>sns.scatterplot(</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span>matched_df[<span class="st">"Adj Close"</span>],</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span>matched_df[<span class="st">"Box Office"</span>],</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">'x'</span>,</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"darkred"</span>,</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">80</span></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Stock Adj Close on Movie Release Day ($)"</span>)</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Individual Movie Box Office ($)"</span>)</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Individual Movie Box Office vs. Stock Market (1999–2019)"</span>)</span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -801,6 +803,51 @@ dtype: int64</code></pre>
 <ol start="3" type="1">
 <li>Fitting mutiple degree polynomials to predict movies box office revenue.</li>
 </ol>
+<div id="5bcd32e5" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> PolynomialFeatures</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">#Fitting them on yearly avg box office plotted against yearly adj stock close</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> stock_yearly[<span class="st">"Adj Close"</span>].values.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> movies_yearly[<span class="st">"Box Office"</span>].values</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Plotting polynomial fits for different degrees</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>degrees <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">13</span>]</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">'blue'</span>, <span class="st">'red'</span>, <span class="st">'green'</span>]</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>plt.scatter(X, y, color<span class="op">=</span><span class="st">"gray"</span>, label<span class="op">=</span><span class="st">"Avg Box Office Data"</span>, s<span class="op">=</span><span class="dv">60</span>)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> deg, color <span class="kw">in</span> <span class="bu">zip</span>(degrees, colors):</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    poly <span class="op">=</span> PolynomialFeatures(degree<span class="op">=</span>deg)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    X_poly <span class="op">=</span> poly.fit_transform(X)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> LinearRegression().fit(X_poly, y)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    y_pred <span class="op">=</span> model.predict(X_poly)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    plt.plot(X.flatten(), y_pred, color<span class="op">=</span>color, linewidth<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="ss">f"Degree </span><span class="sc">{</span>deg<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Models' performance </span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    r2 <span class="op">=</span> r2_score(y, y_pred)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Plotting R </span></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    plt.plot(X.flatten(), y_pred, color<span class="op">=</span>color, linewidth<span class="op">=</span><span class="dv">2</span>, </span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>             label<span class="op">=</span><span class="ss">f"Degree </span><span class="sc">{</span>deg<span class="sc">}</span><span class="ss"> (R² = </span><span class="sc">{</span>r2<span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Average Stock Adj Close ($)"</span>)</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Average Box Office Revenue ($)"</span>)</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Polynomial Regression of Box Office Revenue vs. Stock Market (1999–2019)"</span>)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>)</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="stock_movie_analysis_1_files/figure-html/cell-12-output-1.png" width="949" height="564" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>From the polynomial fits, we can see that they don’t perform perfectly overall, but the 13th-degree polynomial gave the best result. This shows that higher-degree models can capture more of the patterns in the data. Still, it’s clear that the stock market alone isn’t enough to predict box office performance. Other factors like the movie’s genre, time of year it was released, and the actors involved likely play a big role. –&gt; It might be worth exploring these??</p>
 
 </main>
 <!-- /main column -->
