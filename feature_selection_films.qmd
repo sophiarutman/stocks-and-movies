@@ -1,0 +1,238 @@
+---
+title: "Feature Selection: S&P IDX vs Films"
+format:
+    html:
+        embed-resources: true
+---
+
+## Reading in the Data
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(naniar)
+library(tidyr)
+library(leaps)
+library(glmnet)
+
+# reading in the data
+films_stocks <- read.csv("merged_data/merged.csv")
+```
+
+## Preprocessing
+```{r}
+# checking the data
+head(films_stocks)
+colnames(films_stocks)
+nrow(films_stocks)
+
+# dropping unnecessary columns
+films_stocks <- films_stocks %>% select(-c('Poster.URL', 'X'))
+
+# dropping everything except ^SPX
+films_stocks <- films_stocks %>% filter(Stock == '^SPX')
+nrow(films_stocks)
+
+# dropping all rows with NaN in the Date column
+films_stocks <- films_stocks %>% filter(!is.na(Date) & Date != "")
+films_stocks <- films_stocks %>% filter(!is.na(Rated) & Rated != "")
+nrow(films_stocks)
+
+# make the empty NA
+films_stocks[films_stocks == ""] <- NA
+
+# looking at missing values
+vis_miss(films_stocks)
+
+#dropping the missing values
+films_stocks <- films_stocks %>% drop_na()
+
+# total rows
+print(c("TOTAL ROWS NOW:", nrow(films_stocks)))
+
+# checking missing again
+vis_miss(films_stocks)
+
+# exporting the cleaned data
+write.csv(films_stocks, 'data/films_stocks_clean.csv', row.names = FALSE)
+```
+
+## Feature Selection
+```{r}
+films_stocks <- read.csv("data/films_stocks_clean.csv")
+```
+
+```{r}
+# keeping only the main genre
+films_stocks$Genre <- sapply(strsplit(as.character(films_stocks$Genre), ", "), `[`, 1)
+```
+
+
+```{r}
+# converting to one-hot encoding
+films_stocks$Rated <- as.factor(films_stocks$Rated)
+films_stocks$Genre <- as.factor(films_stocks$Genre)
+films_stocks$Country <- as.factor(films_stocks$Country)
+
+# IMDB votes to numeric
+films_stocks$IMDB.Votes <- as.numeric(gsub(",", "", films_stocks$IMDB.Votes))
+summary(films_stocks$IMDB.Votes)
+films_stocks$log_IMDB.Votes <- log1p(films_stocks$IMDB.Votes)
+
+# converting Runtime to numeric
+films_stocks$Runtime <- as.numeric(gsub(" min", "", films_stocks$Runtime))
+
+# converting Box.Office to numeric 
+films_stocks$Box.Office <- as.numeric(gsub("[\\$,]", "", films_stocks$Box.Office))
+```
+
+### Forward Subset Selection
+```{r}
+# running forward subset selection
+regfit.for=regsubsets(Adj.Close ~ Year + Genre + Runtime + Rated + IMDB.Rating + Metascore + IMDB.Votes + Box.Office, data = films_stocks, method="forward")
+```
+
+```{r}
+# getting the summary
+reg.summary=summary(regfit.for)
+reg.summary$which
+print(reg.summary)
+
+m.bic = which.min(reg.summary$bic)
+m.cp = which.min(reg.summary$cp)
+m.adjr2 = which.max(reg.summary$adjr2)
+
+coef(regfit.for, id = m.bic)
+coef(regfit.for, id = m.cp)
+coef(regfit.for, id = m.adjr2)
+
+# plotting BIC
+m=which.min(reg.summary$bic)
+print(c("optimal feature subset-size according to BIC:",m))
+plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+points(m.bic, reg.summary$bic[m.bic], col="red", cex=2, pch=20)
+
+# plotting CP
+plot(reg.summary$cp,xlab="Number of Variables",ylab="Cp",type='l')
+m=which.min(reg.summary$cp)
+print(c("optimal feature subset-size according to cp:",m))
+points(m.cp, reg.summary$cp[m.cp], col="red", cex=2, pch=20)
+
+# plotting Adjusted R-sqaured:
+m=which.max(reg.summary$adjr2)
+print(c("optimal feature subset-size according to ADJR2:",m))
+plot(reg.summary$adjr2, xlab="Number of Variables", ylab="Adjusted R-squared", type='l')
+points(m.adjr2, reg.summary$adjr2[m.adjr2], col="red", cex=2, pch=20)
+```
+
+### Backwards Subset Selection
+```{r}
+# running backward subset selection
+regfit.back=regsubsets(Adj.Close ~ Year + Genre + Runtime + Rated + IMDB.Rating + Metascore + IMDB.Votes + Box.Office, data = films_stocks, method="backward")
+```
+
+```{r}
+# getting the summary
+reg.summary=summary(regfit.back)
+reg.summary$which
+print(reg.summary)
+
+m.bic = which.min(reg.summary$bic)
+m.cp = which.min(reg.summary$cp)
+m.adjr2 = which.max(reg.summary$adjr2)
+
+coef(regfit.back, id = m.bic)
+coef(regfit.back, id = m.cp)
+coef(regfit.back, id = m.adjr2)
+
+# plotting BIC
+m=which.min(reg.summary$bic)
+print(c("optimal feature subset-size according to BIC:",m))
+plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+points(m.bic, reg.summary$bic[m.bic], col="red", cex=2, pch=20)
+
+# plotting CP
+plot(reg.summary$cp,xlab="Number of Variables",ylab="Cp",type='l')
+m=which.min(reg.summary$cp)
+print(c("optimal feature subset-size according to cp:",m))
+points(m.cp, reg.summary$cp[m.cp], col="red", cex=2, pch=20)
+
+# plotting Adjusted R-sqaured:
+m=which.max(reg.summary$adjr2)
+print(c("optimal feature subset-size according to ADJR2:",m))
+plot(reg.summary$adjr2, xlab="Number of Variables", ylab="Adjusted R-squared", type='l')
+points(m.adjr2, reg.summary$adjr2[m.adjr2], col="red", cex=2, pch=20)
+```
+
+### Lasso Selection
+
+```{r}
+# Define the modeling formula
+formula <- Adj.Close ~ Year + Genre + Runtime + Rated + IMDB.Rating + Metascore + IMDB.Votes + Box.Office
+
+# Create design matrix (x) and response vector (y)
+x <- model.matrix(formula, data = films_stocks)[, -1]  # remove intercept
+y <- films_stocks$Adj.Close
+
+# Fit lasso without cross-validation
+lasso_model <- glmnet(x, y, alpha = 1)
+
+# Find lambda where exactly 8 predictors are selected
+chosen_lambda <- NULL
+
+for (lambda_val in lasso_model$lambda) {
+  coef_lasso <- coef(lasso_model, s = lambda_val)
+  non_zero_coeffs <- sum(coef_lasso != 0) - 1  # exclude intercept
+  if (non_zero_coeffs == 8) {
+    chosen_lambda <- lambda_val
+    cat("Lambda when 8 coefficients are non-zero:", lambda_val, "\n")
+    print(coef_lasso)
+    break
+  }
+}
+
+plot(lasso_model, xvar = "lambda", label = TRUE)
+if (!is.null(chosen_lambda)) {
+  abline(v = log(chosen_lambda), col = "red", lty = 2)
+}
+```
+
+```{r}
+# Perform cross-validation to choose lambda
+lasso_cv <- cv.glmnet(x, y, alpha = 1, nfolds = 10)
+
+# Extract the lambda at 1 standard error
+lambda_1se <- lasso_cv$lambda.1se
+error_1se <- lasso_cv$cvm[lasso_cv$lambda == lambda_1se]
+
+cat("Lambda at 1SE:", lambda_1se, "\n")
+cat("Cross-validation error at 1SE:", error_1se, "\n")
+```
+
+```{r}
+# Coefficients at lambda.1se (simpler model with good generalization)
+coef(lasso_cv, s = "lambda.1se")
+
+# Number of non-zero predictors (excluding intercept)
+nonzero_at_1se <- sum(coef(lasso_cv, s = "lambda.1se") != 0) - 1
+cat("Number of predictors at lambda.1se:", nonzero_at_1se, "\n")
+```
+
+## Conclusions
+
+There were a couple of different sets of feature selected across the three methods.
+
+**Forward selected either 6 features or 8 features**:
+BIC: Year, Runtime, GenreComedy, Runtime, MetaScore, IMDB.Votes
+
+CP/ADJ: Year, GenreComedy, GenreDrama, Runtime, RatedG, RatedM/PG, MetaScore, IMDB.Votes
+
+**Backward selected either 7 or 8 features**.
+BIC: Year, Runtime, RatedPG, RatedPG-13, RatedR, Metascore, IMDB.Votes
+
+CP/ADJ: Year, Runtime, RatedG, RatedPG, RatedPG-13, Rated-R, MetaScore, IMDB.Votes
+
+**Lasso selected 5 features**:
+Year, GenreComedy, Runtime, Metascore, IMDB.Votes
+
+Across all the methods and models **Year, Runtime, MetaScore, and IMDB.Votes** were always present. 
+The difference was whether to include variations of the Genre and Rated variables. We will move forward with attempting the model with these 4 base features and iteratively adding the additional ones to see which add to the model without overfitting.
