@@ -405,6 +405,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 
+# Apply log transformation to IMDB Votes
+df['IMDB Votes'] = np.log(df['IMDB Votes'] + 1)
 # Create binary target
 df['Adj_Close_diff'] = df['Adj Close'].diff().shift(-1)
 df['Adj_Close_up'] = (df['Adj_Close_diff'] > 0).astype(int)
@@ -429,6 +431,7 @@ for col in needed_ratings:
 for col in needed_genres:
     if col not in genre_dummies.columns:
         genre_dummies[col] = 0
+
 
 # Combine data
 df_model_combined = pd.concat([df, rated_dummies[needed_ratings], genre_dummies[needed_genres]], axis=1)
