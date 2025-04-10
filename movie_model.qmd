@@ -68,6 +68,50 @@ y_pred = reg.predict(X_test)
 # Model Evaluation
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+# Cross-Validated R² Plot
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(range(1, 6), cv_scores, marker='o', linestyle='-', color='blue')
+plt.title('Cross-Validated R² Scores (K-Fold = 5)')
+plt.xlabel('Fold')
+plt.ylabel('R² Score')
+plt.ylim(0, 1)
+plt.grid(True)
+
+# Cross-Validated MSE Plot
+plt.subplot(1, 2, 2)
+plt.plot(range(1, 6), -cv_mse, marker='s', linestyle='-', color='red')  # Make MSE positive
+plt.title('Cross-Validated MSE Scores (K-Fold = 5)')
+plt.xlabel('Fold')
+plt.ylabel('MSE')
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
+# Predicted vs Actual on Test Set
+plt.figure(figsize=(6, 6))
+sns.scatterplot(x=y_test, y=y_pred, color='green')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.title('Predicted vs Actual on Test Set')
+plt.grid(True)
+plt.show()
+
+# Residuals Plot
+residuals = y_test - y_pred
+plt.figure(figsize=(6, 4))
+sns.histplot(residuals, kde=True, bins=20, color='purple')
+plt.title('Distribution of Residuals')
+plt.xlabel('Residual')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.show()
 
 print(f'MSE: {mse}')
 print(f'R^2: {r2}')
@@ -86,6 +130,9 @@ print(var_result.summary())
 
 # Lag Analysis - Testing 3, 6, 12 month lags
 lag_intervals = [90, 180, 365]  # Approximate days for 3, 6, and 12 months
+mse_scores = []
+r2_scores = []
+
 
 for lag in lag_intervals:
     df[f'Adj Close_lag{lag}'] = df['Adj Close'].shift(lag)
@@ -105,6 +152,55 @@ for lag in lag_intervals:
 
     print(f'Lag Analysis for {lag} days: MSE = {mse_lag}, R^2 = {r2_lag}')
 
+
+    mse_scores.append(mse_lag)
+    r2_scores.append(r2_lag)
+
+plt.figure(figsize=(12, 5))
+
+# MSE Plot
+plt.subplot(1, 2, 1)
+sns.barplot(x=[f'{lag//30}m' for lag in lag_intervals], y=mse_scores, palette='Reds_r')
+plt.title('MSE for Different Lags')
+plt.xlabel('Lag (months)')
+plt.ylabel('MSE')
+
+# R² Plot
+plt.subplot(1, 2, 2)
+sns.barplot(x=[f'{lag//30}m' for lag in lag_intervals], y=r2_scores, palette='Blues')
+plt.title('R² Score for Different Lags')
+plt.xlabel('Lag (months)')
+plt.ylabel('R²')
+
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+plt.figure(figsize=(15, 4))
+
+for idx, lag in enumerate(lag_intervals):
+    df[f'Adj Close_lag{lag}'] = df['Adj Close'].shift(lag)
+    lagged_data = df.dropna(subset=[f'Adj Close_lag{lag}', 'Box Office'])
+
+    X_lag = lagged_data[[f'Adj Close_lag{lag}']]
+    y_lag = np.log(lagged_data['Box Office'])
+
+    X_train_lag, X_test_lag, y_train_lag, y_test_lag = train_test_split(X_lag, y_lag, test_size=0.2, random_state=42)
+    reg_lag = LinearRegression()
+    reg_lag.fit(X_train_lag, y_train_lag)
+
+    y_pred_lag = reg_lag.predict(X_test_lag)
+    residuals = y_test_lag - y_pred_lag
+
+    plt.subplot(1, 3, idx + 1)
+    sns.histplot(residuals, kde=True, bins=20, color='skyblue')
+    plt.title(f'Residuals for Lag {lag//30}m')
+    plt.xlabel('Residual')
+    plt.ylabel('Frequency')
+
+plt.tight_layout()
+plt.show()
 ```
 
 ```{python}
