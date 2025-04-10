@@ -1,0 +1,614 @@
+# type: ignore
+# flake8: noqa
+#
+#
+#
+#
+#
+#
+#
+import pandas as pd 
+import numpy as np 
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, cross_val_score, KFold
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from statsmodels.tsa.stattools import grangercausalitytests
+from statsmodels.tsa.api import VAR
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.model_selection import GridSearchCV
+#
+#
+#
+df = pd.read_csv("merged_data/merged.csv")
+df.head()
+#
+#
+#
+#
+# Define predictors and outcome variables
+predictors = ['Year', 'Runtime', 'Metascore', 'IMDB Votes']  # Selected predictors
+outcome = 'Box Office'
+
+# Fill missing values
+
+df = df.dropna(subset=[outcome])
+df = df.fillna(df.mean())
+
+df['IMDB Votes'] = np.log(df['IMDB Votes'] + 1)  # Log-transforming IMDB Votes
+
+df = df.dropna(subset=predictors)  # Ensure predictors have no missing values
+
+# Split data
+X = df[predictors]
+y = np.log(df[outcome])  # Log-transforming Box Office
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+#
+#
+#
+#
+#
+reg = LinearRegression()
+
+# Implementing K-Fold Cross-Validation
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+cv_scores = cross_val_score(reg, X, y, cv=kf, scoring='r2')  # Evaluating using R²
+cv_mse = cross_val_score(reg, X, y, cv=kf, scoring='neg_mean_squared_error')  # Evaluating using MSE
+
+print(f'Cross-Validated R² Scores: {cv_scores}')
+print(f'Mean CV R² Score: {np.mean(cv_scores)}')
+print(f'Mean CV MSE: {-np.mean(cv_mse)}')
+
+# Fitting the model on full training data
+reg.fit(X_train, y_train)
+y_pred = reg.predict(X_test)
+
+# Model Evaluation
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+# Cross-Validated R² Plot
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(range(1, 6), cv_scores, marker='o', linestyle='-', color='blue')
+plt.title('Cross-Validated R² Scores (K-Fold = 5)')
+plt.xlabel('Fold')
+plt.ylabel('R² Score')
+plt.ylim(0, 1)
+plt.grid(True)
+
+# Cross-Validated MSE Plot
+plt.subplot(1, 2, 2)
+plt.plot(range(1, 6), -cv_mse, marker='s', linestyle='-', color='red')  # Make MSE positive
+plt.title('Cross-Validated MSE Scores (K-Fold = 5)')
+plt.xlabel('Fold')
+plt.ylabel('MSE')
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
+# Predicted vs Actual on Test Set
+plt.figure(figsize=(6, 6))
+sns.scatterplot(x=y_test, y=y_pred, color='green')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.title('Predicted vs Actual on Test Set')
+plt.grid(True)
+plt.show()
+
+# Residuals Plot
+residuals = y_test - y_pred
+plt.figure(figsize=(6, 4))
+sns.histplot(residuals, kde=True, bins=20, color='purple')
+plt.title('Distribution of Residuals')
+plt.xlabel('Residual')
+plt.ylabel('Frequency')
+plt.grid(True)
+plt.show()
+
+print(f'MSE: {mse}')
+print(f'R^2: {r2}')
+#
+#
+#
+#
+#
+granger_data = df[['Box Office', 'Adj Close']].dropna()
+grangercausalitytests(granger_data, maxlag=12)
+
+# VAR Model Example
+var_model = VAR(granger_data)
+var_result = var_model.fit(maxlags=12, ic='aic')
+print(var_result.summary())
+
+# Lag Analysis - Testing 3, 6, 12 month lags
+lag_intervals = [90, 180, 365]  # Approximate days for 3, 6, and 12 months
+mse_scores = []
+r2_scores = []
+
+
+for lag in lag_intervals:
+    df[f'Adj Close_lag{lag}'] = df['Adj Close'].shift(lag)
+    lagged_data = df.dropna(subset=[f'Adj Close_lag{lag}', 'Box Office'])
+
+    X_lag = lagged_data[[f'Adj Close_lag{lag}']]
+    y_lag = np.log(lagged_data['Box Office'])
+
+    X_train_lag, X_test_lag, y_train_lag, y_test_lag = train_test_split(X_lag, y_lag, test_size=0.2, random_state=42)
+
+    reg_lag = LinearRegression()
+    reg_lag.fit(X_train_lag, y_train_lag)
+
+    y_pred_lag = reg_lag.predict(X_test_lag)
+    mse_lag = mean_squared_error(y_test_lag, y_pred_lag)
+    r2_lag = r2_score(y_test_lag, y_pred_lag)
+
+    print(f'Lag Analysis for {lag} days: MSE = {mse_lag}, R^2 = {r2_lag}')
+
+
+    mse_scores.append(mse_lag)
+    r2_scores.append(r2_lag)
+
+plt.figure(figsize=(12, 5))
+
+# MSE Plot
+plt.subplot(1, 2, 1)
+sns.barplot(x=[f'{lag//30}m' for lag in lag_intervals], y=mse_scores, palette='Reds_r')
+plt.title('MSE for Different Lags')
+plt.xlabel('Lag (months)')
+plt.ylabel('MSE')
+
+# R² Plot
+plt.subplot(1, 2, 2)
+sns.barplot(x=[f'{lag//30}m' for lag in lag_intervals], y=r2_scores, palette='Blues')
+plt.title('R² Score for Different Lags')
+plt.xlabel('Lag (months)')
+plt.ylabel('R²')
+
+plt.tight_layout()
+plt.show()
+#
+#
+#
+plt.figure(figsize=(15, 4))
+
+for idx, lag in enumerate(lag_intervals):
+    df[f'Adj Close_lag{lag}'] = df['Adj Close'].shift(lag)
+    lagged_data = df.dropna(subset=[f'Adj Close_lag{lag}', 'Box Office'])
+
+    X_lag = lagged_data[[f'Adj Close_lag{lag}']]
+    y_lag = np.log(lagged_data['Box Office'])
+
+    X_train_lag, X_test_lag, y_train_lag, y_test_lag = train_test_split(X_lag, y_lag, test_size=0.2, random_state=42)
+    reg_lag = LinearRegression()
+    reg_lag.fit(X_train_lag, y_train_lag)
+
+    y_pred_lag = reg_lag.predict(X_test_lag)
+    residuals = y_test_lag - y_pred_lag
+
+    plt.subplot(1, 3, idx + 1)
+    sns.histplot(residuals, kde=True, bins=20, color='skyblue')
+    plt.title(f'Residuals for Lag {lag//30}m')
+    plt.xlabel('Residual')
+    plt.ylabel('Frequency')
+
+plt.tight_layout()
+plt.show()
+#
+#
+#
+reverse_data = df[['Adj Close', 'Box Office']].dropna()
+grangercausalitytests(reverse_data[['Adj Close', 'Box Office']], maxlag=12)
+
+var_model_rev = VAR(reverse_data)
+var_result_rev = var_model_rev.fit(maxlags=12, ic='aic')
+print(var_result_rev.summary())
+
+# Forecasting next 10 periods (could be days/weeks depending on your data freq)
+forecast = var_result_rev.forecast(var_result_rev.y, steps=10)
+forecast_index = pd.date_range(start=granger_data.index[-1], periods=10, freq='D')
+
+forecast_df = pd.DataFrame(forecast, index=forecast_index, columns=granger_data.columns)
+
+# Plot forecasts vs actual
+plt.figure(figsize=(10, 5))
+for col in granger_data.columns:
+    plt.plot(granger_data[col].iloc[-50:], label=f'Actual {col}')
+    plt.plot(forecast_df[col], linestyle='--', label=f'Forecast {col}')
+
+plt.title('VAR Model Forecast (Next 10 Days)')
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#
+#
+#
+#
+# Prepare data
+X = df[['Box Office']]  # Use Box Office as the predictor
+y = df['Adj Close']  # Adjusted Close is the outcome variable
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Fit regression model
+reg = LinearRegression()
+reg.fit(X_train, y_train)
+
+# Predict
+y_pred = reg.predict(X_test)
+
+# Model Evaluation
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f'MSE: {mse}')
+print(f'R^2: {r2}')
+#
+#
+#
+#
+#
+df['SP500_return'] = df['Adj Close'].pct_change().shift(-1)
+df['SP500_up'] = (df['SP500_return'] > 0).astype(int)
+
+features = ['Box Office']  # Make sure 'Budget' is cleaned & numeric
+X = df[features]
+y = df['SP500_up']
+
+# Drop rows with missing values
+df_model = pd.concat([X, y], axis=1).dropna()
+X = df[features]
+y = df['SP500_up']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("Classification Report:\n", classification_report(y_test, y_pred))
+#
+#
+#
+#
+# Example data preprocessing
+df['SP500_return'] = df['Adj Close'].pct_change().shift(-1)
+df['SP500_up'] = (df['SP500_return'] > 0).astype(int)
+
+# Feature engineering - Adding rolling averages
+df['BoxOffice_roll_avg'] = df['Box Office'].rolling(window=7).mean()
+df['SP500_roll_avg'] = df['SP500_return'].rolling(window=7).mean()
+
+# Defining features
+features = ['Box Office', 'BoxOffice_roll_avg', 'SP500_roll_avg']
+X = df[features]
+y = df['SP500_up']
+
+# Drop rows with missing values
+df_model = pd.concat([X, y], axis=1).dropna()
+X = df_model[features]
+y = df_model['SP500_up']
+
+# Train/Test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
+
+# Model tuning with GridSearchCV for hyperparameter C
+log_reg = LogisticRegression()
+
+# Hyperparameter grid for regularization strength
+param_grid = {'C': [0.01, 0.1, 1, 10, 100]}
+
+# Grid search with 5-fold cross-validation
+grid_search = GridSearchCV(log_reg, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+
+# Best model from grid search
+best_model = grid_search.best_estimator_
+
+# Evaluate on test data
+y_pred = best_model.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+# Perform K-Fold cross-validation to evaluate generalization
+cv_scores = cross_val_score(best_model, X, y, cv=5, scoring='accuracy')
+print(f"Cross-Validated Accuracy Scores: {cv_scores}")
+print(f"Mean CV Accuracy: {cv_scores.mean()}")
+
+#
+#
+#
+#
+#
+# Create a classification target based on whether Adj Close increases the next day
+df['Adj_Close_diff'] = df['Adj Close'].diff().shift(-1)
+df['Adj_Close_up'] = (df['Adj_Close_diff'] > 0).astype(int)
+
+# One-hot encode 'Rated' to get RatedG, RatedPG, RatedPG-13, Rated-R
+rated_dummies = pd.get_dummies(df['Rated'], prefix='Rated')
+df = pd.concat([df, rated_dummies], axis=1)
+movie_features = ['Year', 'Runtime', 'Metascore', 'IMDB Votes']
+stock_features = ['Open', 'Close', 'Volume']
+rating_features = [col for col in df.columns if col.startswith('Rated_')]
+
+# Final feature list
+all_features = movie_features + stock_features + rating_features
+#
+#
+#
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+# Drop rows with missing values
+X = df[all_features].dropna()
+y = df.loc[X.index, 'Adj_Close_up']
+
+# ---------------------------------------
+# Step 4: Scale numeric features
+# ---------------------------------------
+scaler = StandardScaler()
+numeric_cols = movie_features + stock_features
+X_scaled = X.copy()
+X_scaled[numeric_cols] = scaler.fit_transform(X_scaled[numeric_cols])
+
+# ---------------------------------------
+# Step 5: Train/Test Split
+# ---------------------------------------
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, shuffle=False)
+
+# ---------------------------------------
+# Step 6: Train Logistic Regression
+# ---------------------------------------
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+# ---------------------------------------
+# Step 7: Predict & Evaluate
+# ---------------------------------------
+y_pred = model.predict(X_test)
+report = classification_report(y_test, y_pred)
+print(report)
+#
+#
+#
+#
+# Train Logistic Regression with class_weight='balanced' to address class imbalance
+model_balanced = LogisticRegression(max_iter=1000, class_weight='balanced')
+model_balanced.fit(X_train, y_train)
+
+# Predict and evaluate
+y_pred_balanced = model_balanced.predict(X_test)
+balanced_report = classification_report(y_test, y_pred_balanced)
+print(balanced_report)
+#
+#
+#
+#
+# First, create binary classification target again in case it's needed
+df['Adj_Close_diff'] = df['Adj Close'].diff().shift(-1)
+df['Adj_Close_up'] = (df['Adj_Close_diff'] > 0).astype(int)
+
+# One-hot encode Rated and Genre columns
+rated_dummies = pd.get_dummies(df['Rated'], prefix='Rated')
+genre_dummies = pd.get_dummies(df['Genre'], prefix='Genre')
+
+# Include specific rated and genre categories needed
+needed_ratings = ['RatedG', 'RatedM/PG']
+needed_genres = ['GenreComedy', 'GenreDrama']
+
+# Ensure all needed dummies are in the dataset
+for col in needed_ratings:
+    if col not in rated_dummies.columns:
+        rated_dummies[col] = 0
+
+for col in needed_genres:
+    if col not in genre_dummies.columns:
+        genre_dummies[col] = 0
+
+# Combine into main DataFrame
+df_model_cp = pd.concat([df, rated_dummies[needed_ratings], genre_dummies[needed_genres]], axis=1)
+
+# Select features and drop missing
+selected_cp_adj_features = ['Year', 'Runtime', 'Metascore', 'IMDB Votes'] + needed_genres + needed_ratings
+X_cp = df_model_cp[selected_cp_adj_features].dropna()
+y_cp = df_model_cp.loc[X_cp.index, 'Adj_Close_up']
+
+# Scale numeric features
+scaler = StandardScaler()
+X_cp_scaled = X_cp.copy()
+X_cp_scaled[['Year', 'Runtime', 'Metascore', 'IMDB Votes']] = scaler.fit_transform(
+    X_cp_scaled[['Year', 'Runtime', 'Metascore', 'IMDB Votes']]
+)
+
+# Train/test split
+X_train_cp, X_test_cp, y_train_cp, y_test_cp = train_test_split(X_cp_scaled, y_cp, test_size=0.2, shuffle=False)
+
+# Logistic Regression with class_weight='balanced'
+model_cp = LogisticRegression(max_iter=1000, class_weight='balanced')
+model_cp.fit(X_train_cp, y_train_cp)
+
+# Predict and evaluate
+y_pred_cp = model_cp.predict(X_test_cp)
+cp_report = classification_report(y_test_cp, y_pred_cp)
+print(cp_report)
+
+#
+#
+#
+#
+# Create lagged and return-based features
+df['Adj_Close_lag1'] = df['Adj Close'].shift(1)
+df['Adj_Close_return'] = df['Adj Close'].pct_change()
+
+# Drop initial NaNs from shift and pct_change
+df.dropna(subset=['Adj_Close_lag1', 'Adj_Close_return'], inplace=True)
+
+# One-hot encode Rated and Genre
+rated_dummies = pd.get_dummies(df['Rated'], prefix='Rated')
+genre_dummies = pd.get_dummies(df['Genre'], prefix='Genre')
+
+# Ensure specific dummy columns exist
+needed_ratings = ['RatedG', 'RatedM/PG']
+needed_genres = ['GenreComedy', 'GenreDrama']
+
+for col in needed_ratings:
+    if col not in rated_dummies.columns:
+        rated_dummies[col] = 0
+
+for col in needed_genres:
+    if col not in genre_dummies.columns:
+        genre_dummies[col] = 0
+
+# Combine dummies with main DataFrame
+df_model_combined = pd.concat([
+    df,
+    rated_dummies[needed_ratings],
+    genre_dummies[needed_genres]
+], axis=1)
+
+# Final feature list: CP/ADJ + stock + lag/return
+combined_features = [
+    'Year', 'Runtime', 'Metascore', 'IMDB Votes',
+    'Open', 'Close', 'Volume', 'Adj_Close_lag1', 'Adj_Close_return'
+] + needed_genres + needed_ratings
+
+# Define X and y
+X_combined = df_model_combined[combined_features].dropna()
+y_combined = df_model_combined.loc[X_combined.index, 'Adj_Close_up']
+
+# Scale numeric features
+scaler = StandardScaler()
+numeric_cols = [
+    'Year', 'Runtime', 'Metascore', 'IMDB Votes',
+    'Open', 'Close', 'Volume', 'Adj_Close_lag1', 'Adj_Close_return'
+]
+X_combined_scaled = X_combined.copy()
+X_combined_scaled[numeric_cols] = scaler.fit_transform(X_combined_scaled[numeric_cols])
+
+# Train/test split
+X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(X_combined_scaled, y_combined, test_size=0.2, shuffle=False)
+
+# Train Logistic Regression with class_weight='balanced'
+model_combined = LogisticRegression(max_iter=1000, class_weight='balanced')
+model_combined.fit(X_train_c, y_train_c)
+
+# Predict and evaluate
+y_pred_c = model_combined.predict(X_test_c)
+combined_report = classification_report(y_test_c, y_pred_c)
+print(combined_report)
+
+#
+#
+#
+#
+# Re-import everything due to kernel reset again
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
+# Apply log transformation to IMDB Votes
+df['IMDB Votes'] = np.log(df['IMDB Votes'] + 1)
+# Create binary target
+df['Adj_Close_diff'] = df['Adj Close'].diff().shift(-1)
+df['Adj_Close_up'] = (df['Adj_Close_diff'] > 0).astype(int)
+
+# Add lag and return features
+df['Adj_Close_lag1'] = df['Adj Close'].shift(1)
+df['Adj_Close_return'] = df['Adj Close'].pct_change()
+
+# Drop rows with missing values in required fields
+df.dropna(subset=['Adj_Close_lag1', 'Adj_Close_return'], inplace=True)
+
+# One-hot encode Rated and Genre columns
+rated_dummies = pd.get_dummies(df['Rated'], prefix='Rated')
+genre_dummies = pd.get_dummies(df['Genre'], prefix='Genre')
+
+# Ensure necessary columns exist
+needed_ratings = ['RatedG', 'RatedM/PG']
+needed_genres = ['GenreComedy', 'GenreDrama']
+for col in needed_ratings:
+    if col not in rated_dummies.columns:
+        rated_dummies[col] = 0
+for col in needed_genres:
+    if col not in genre_dummies.columns:
+        genre_dummies[col] = 0
+
+
+# Combine data
+df_model_combined = pd.concat([df, rated_dummies[needed_ratings], genre_dummies[needed_genres]], axis=1)
+combined_features = [
+    'Year', 'Runtime', 'Metascore', 'IMDB Votes',
+    'Open', 'Close', 'Volume', 'Adj_Close_lag1', 'Adj_Close_return'
+] + needed_genres + needed_ratings
+
+# Create feature and target sets
+X_combined = df_model_combined[combined_features].dropna()
+y_combined = df_model_combined.loc[X_combined.index, 'Adj_Close_up']
+
+# Scale numeric features
+scaler = StandardScaler()
+numeric_cols = [
+    'Year', 'Runtime', 'Metascore', 'IMDB Votes',
+    'Open', 'Close', 'Volume', 'Adj_Close_lag1', 'Adj_Close_return'
+]
+X_combined_scaled = X_combined.copy()
+X_combined_scaled[numeric_cols] = scaler.fit_transform(X_combined_scaled[numeric_cols])
+
+# Split into training and testing sets
+X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(X_combined_scaled, y_combined, test_size=0.2, shuffle=False)
+
+# Grid search for hyperparameter tuning
+log_reg = LogisticRegression(class_weight='balanced', solver='liblinear')
+param_grid = {'C': [0.01, 0.1, 1, 10, 100], 'penalty': ['l1', 'l2']}
+grid_search = GridSearchCV(log_reg, param_grid, cv=5, scoring='f1', n_jobs=-1)
+grid_search.fit(X_train_c, y_train_c)
+
+# Evaluate the best model
+best_log_reg = grid_search.best_estimator_
+y_pred_tuned = best_log_reg.predict(X_test_c)
+tuned_report = classification_report(y_test_c, y_pred_tuned)
+best_params = grid_search.best_params_
+
+tuned_report, best_params
+
+```
+#
+#
+#
+# Train the best model again with known best parameters
+model_tuned = LogisticRegression(C=0.01, penalty='l1', solver='liblinear', class_weight='balanced')
+model_tuned.fit(X_train_c, y_train_c)
+y_pred_tuned = model_tuned.predict(X_test_c)
+#
+#
+#
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+# Generate and plot confusion matrix
+cm = confusion_matrix(y_test_c, y_pred_tuned)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Down/Same (0)', 'Up (1)'])
+plt.figure(figsize=(6, 4))
+disp.plot(cmap='Blues', values_format='d')
+plt.title("Confusion Matrix - Tuned Logistic Regression")
+plt.grid(False)
+plt.tight_layout()
+plt.show()
+#
+#
+#
